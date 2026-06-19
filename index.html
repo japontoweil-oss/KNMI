@@ -1318,16 +1318,21 @@
         let TEMPS = {};
         let dataLoaded = false;
         let dataLoadError = false;
+        let loadTimeout = null; // Variabele voor de timer
 
         const statusEl = document.getElementById('load-status');
 
         function setStatus(html, cls) {
             if (!statusEl) return;
+            statusEl.style.display = 'block'; // Zorg dat de balk zichtbaar is
             statusEl.className = 'load-msg ' + (cls || '');
             statusEl.innerHTML = html;
         }
 
         async function loadData() {
+            // Wis eventuele oude timer als de gebruiker snel een andere locatie kiest
+            if (loadTimeout) clearTimeout(loadTimeout);
+
             dataLoaded = false;
             TEMPS = {};
             const selLoc = document.getElementById('locatie');
@@ -1342,7 +1347,17 @@
                 parseData(text);
                 dataLoaded = true;
                 dataLoadError = false;
+                
                 setStatus('✔ ' + Object.keys(TEMPS).length + ' jaren geladen uit <code>' + fileName + '</code>', 'ok');
+                
+                // Verberg het bericht na 3000 milliseconden (3 seconden)
+                loadTimeout = setTimeout(() => {
+                    if (statusEl) {
+                        statusEl.style.display = 'none';
+                        statusEl.innerHTML = '';
+                    }
+                }, 3000);
+
                 populateYearDropdown();
                 calc();
             } catch (e) {
@@ -1367,22 +1382,20 @@
                 const line = raw.trim();
                 if (!line || line.startsWith('#')) continue;
 
-                // Formaat: STN,YYYYMMDD,HH,T  (met eventuele extra spaties)
                 const parts = line.split(',').map(s => s.trim());
                 if (parts.length < 4) continue;
 
-                const dateStr = parts[1]; // YYYYMMDD
+                const dateStr = parts[1];
                 if (dateStr.length < 8) continue;
                 const year = dateStr.substring(0, 4);
                 const tempRaw = parseFloat(parts[3]);
                 if (isNaN(tempRaw)) continue;
-                const tempC = tempRaw / 10; // 0.1 °C → °C
+                const tempC = tempRaw / 10;
 
                 if (!yearData[year]) yearData[year] = [];
                 yearData[year].push(tempC);
             }
 
-            // Controleer of elk jaar het juiste aantal uren heeft (8760 of 8784)
             TEMPS = {};
             for (const [year, arr] of Object.entries(yearData)) {
                 const expected = isLeapYear(parseInt(year)) ? 8784 : 8760;
