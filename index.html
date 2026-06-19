@@ -1,0 +1,2195 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Warmteverlies-calculator</title>
+    <style>
+        :root {
+            --ink: #0a1722;
+            --paper: #f3efe6;
+            --line: #d8cdb8;
+            --accent: #c75b39;
+            --accent2: #1f6f6f;
+            --cold: #3d6fb4;
+            --warm: #c75b39;
+            --muted: #6b6354;
+        }
+        * {
+            box-sizing: border-box
+        }
+        body {
+            margin: 0;
+            background: var(--paper);
+            color: var(--ink);
+            font-family: "Iowan Old Style", Georgia, "Times New Roman", serif;
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.5
+        }
+        .wrap {
+            max-width: 940px;
+            margin: 0 auto;
+            padding: 32px 22px 64px
+        }
+        .eyebrow {
+            font-family: "Courier New", monospace;
+            font-size: 12px;
+            letter-spacing: .22em;
+            text-transform: uppercase;
+            color: var(--accent2);
+            margin: 0 0 10px
+        }
+        h1 {
+            font-size: clamp(30px, 5vw, 46px);
+            line-height: 1.02;
+            margin: 0 0 8px;
+            font-weight: 600;
+            letter-spacing: - .5px
+        }
+        .lede {
+            color: var(--muted);
+            max-width: 60ch;
+            margin: 0 0 28px;
+            font-size: 16px
+        }
+        .panel {
+            background: #fbf8f1;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            padding: 22px
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px
+        }
+        @media(max-width:680px) {
+            .grid {
+                grid-template-columns: 1fr
+            }
+        }
+        label {
+            display: block;
+            font-family: "Courier New", monospace;
+            font-size: 11px;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin: 0 0 6px
+        }
+        .field {
+            position: relative;
+            margin-bottom: 4px
+        }
+        input,
+        select {
+            width: 100%;
+            font: inherit;
+            font-size: 18px;
+            padding: 11px 13px;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 3px;
+            color: var(--ink)
+        }
+        input:focus,
+        select:focus {
+            outline: 2px solid var(--accent2);
+            outline-offset: -1px;
+            border-color: transparent
+        }
+        .unit {
+            position: absolute;
+            right: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            font-size: 14px;
+            font-family: "Courier New", monospace;
+            pointer-events: none
+        }
+        details {
+            margin-top: 18px;
+            border-top: 1px dashed var(--line);
+            padding-top: 16px
+        }
+        summary {
+            cursor: pointer;
+            font-family: "Courier New", monospace;
+            font-size: 12px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--accent2)
+        }
+        details .grid {
+            margin-top: 16px
+        }
+        .src-note {
+            margin: 5px 0 0;
+            font-family: "Courier New", monospace;
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: .03em
+        }
+        .src-note a {
+            color: var(--accent2);
+            text-decoration: none
+        }
+        .src-note a:hover {
+            text-decoration: underline
+        }
+        .chk {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 14px;
+            font-size: 14px;
+            color: var(--muted)
+        }
+        .chk input {
+            width: auto;
+            margin-top: 3px
+        }
+        .result {
+            margin-top: 26px;
+            border: 1px solid var(--ink);
+            border-radius: 4px;
+            overflow: hidden
+        }
+        .headline {
+            background: var(--ink);
+            color: var(--paper);
+            padding: 26px 24px;
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px
+        }
+        .headline .lab {
+            font-family: "Courier New", monospace;
+            font-size: 12px;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            opacity: .7
+        }
+        .big {
+            font-size: clamp(40px, 9vw, 72px);
+            line-height: .9;
+            font-weight: 600;
+            letter-spacing: -1px
+        }
+        .big small {
+            font-size: .34em;
+            font-weight: 400;
+            opacity: .65;
+            letter-spacing: 0;
+            margin-left: 6px
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px
+        }
+        td {
+            padding: 11px 24px;
+            border-top: 1px solid var(--line)
+        }
+        td:first-child {
+            font-family: "Courier New", monospace;
+            font-size: 12px;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--muted);
+            white-space: nowrap
+        }
+        td:nth-child(2) {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+            font-size: 17px
+        }
+        td .note {
+            display: block;
+            font-family: inherit;
+            font-size: 12px;
+            text-transform: none;
+            letter-spacing: 0;
+            color: var(--muted);
+            margin-top: 2px
+        }
+        .leap {
+            display: inline-block;
+            margin-left: 8px;
+            font-family: "Courier New", monospace;
+            font-size: 10px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 99px;
+            padding: 2px 8px;
+            vertical-align: middle
+        }
+        .foot {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 24px;
+            line-height: 1.6
+        }
+        .formula {
+            font-family: "Courier New", monospace;
+            font-size: 12.5px;
+            background: #fbf8f1;
+            border: 1px solid var(--line);
+            border-radius: 3px;
+            padding: 3px 7px;
+            color: var(--accent2)
+        }
+        .chart-card {
+            margin-top: 40px;
+            border-top: 2px solid var(--ink);
+            padding-top: 24px
+        }
+        .chart-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 8px
+        }
+        .chart-head h2 {
+            font-size: 24px;
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: - .3px
+        }
+        #chart {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            touch-action: pan-y
+        }
+        .chart-tools {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap
+        }
+        .zoombar,
+        .panbar {
+            display: flex;
+            border: 1px solid var(--line);
+            border-radius: 3px;
+            overflow: hidden
+        }
+        .zoombtn {
+            font-family: "Courier New", monospace;
+            font-size: 11px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            padding: 9px 13px;
+            background: #fbf8f1;
+            border: 0;
+            cursor: pointer;
+            color: var(--muted);
+            border-left: 1px solid var(--line)
+        }
+        .zoombar .zoombtn:first-child,
+        .panbar .zoombtn:first-child {
+            border-left: 0
+        }
+        .zoombtn:hover {
+            background: #f0e9da;
+            color: var(--ink)
+        }
+        .zoombtn.is-active {
+            background: var(--ink);
+            color: var(--paper)
+        }
+        .zoombtn:disabled {
+            opacity: .4;
+            cursor: default
+        }
+        .zoom-range {
+            font-family: "Courier New", monospace;
+            font-size: 12px;
+            letter-spacing: .04em;
+            color: var(--muted);
+            margin: 4px 0 0
+        }
+        .zoom-hint {
+            font-size: 12px;
+            color: var(--muted);
+            margin: 8px 0 0;
+            line-height: 1.5
+        }
+        .dlbtn {
+            font-family: "Courier New", monospace;
+            font-size: 12px;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            padding: 10px 16px;
+            background: var(--ink);
+            color: var(--paper);
+            border: 0;
+            border-radius: 3px;
+            cursor: pointer
+        }
+        .dlbtn:hover {
+            background: #1d2c3a
+        }
+        .explain {
+            margin-top: 40px;
+            border-top: 2px solid var(--ink);
+            padding-top: 8px
+        }
+        .explain>summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px 0
+        }
+        .explain>summary::-webkit-details-marker {
+            display: none
+        }
+        .explain>summary h2 {
+            font-size: 24px;
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: - .3px
+        }
+        .explain>summary .toggle {
+            font-family: "Courier New", monospace;
+            font-size: 12px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--accent2);
+            white-space: nowrap
+        }
+        .explain>summary .toggle::after {
+            content: "\002B  Toon uitleg"
+        }
+        .explain[open]>summary .toggle::after {
+            content: "\2212  Verberg uitleg"
+        }
+        .explain-body {
+            padding: 4px 0 12px;
+            max-width: 72ch
+        }
+        .explain-body p {
+            margin: 0 0 14px;
+            font-size: 15px;
+            line-height: 1.65
+        }
+        .explain-body h3 {
+            font-family: "Courier New", monospace;
+            font-size: 12px;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--accent2);
+            margin: 26px 0 10px
+        }
+        .explain-body ol {
+            margin: 0 0 14px;
+            padding-left: 22px
+        }
+        .explain-body li {
+            margin: 0 0 10px;
+            font-size: 15px;
+            line-height: 1.6
+        }
+        .eq {
+            display: block;
+            background: #fbf8f1;
+            border: 1px solid var(--line);
+            border-left: 3px solid var(--accent);
+            border-radius: 3px;
+            padding: 10px 14px;
+            margin: 6px 0 16px;
+            font-family: "Courier New", monospace;
+            font-size: 13px;
+            color: var(--ink);
+            overflow-x: auto;
+            white-space: nowrap
+        }
+        .hourly {
+            margin-top: 40px;
+            border-top: 2px solid var(--ink);
+            padding-top: 24px
+        }
+        .hourly-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 16px
+        }
+        .hourly h2 {
+            font-size: 24px;
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: - .3px
+        }
+        .sortbar {
+            display: flex;
+            gap: 0;
+            border: 1px solid var(--line);
+            border-radius: 3px;
+            overflow: hidden
+        }
+        .sortbtn {
+            font-family: "Courier New", monospace;
+            font-size: 11px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            padding: 9px 13px;
+            background: #fbf8f1;
+            border: 0;
+            cursor: pointer;
+            color: var(--muted);
+            border-left: 1px solid var(--line)
+        }
+        .sortbtn:first-child {
+            border-left: 0
+        }
+        .sortbtn:hover {
+            background: #f0e9da;
+            color: var(--ink)
+        }
+        .sortbtn.is-active {
+            background: var(--ink);
+            color: var(--paper)
+        }
+        .vscroll {
+            max-height: 560px;
+            overflow: auto;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            background: #fff
+        }
+        .vinner {
+            position: relative;
+            min-width: 540px
+        }
+        .vhead,
+        .vrow {
+            display: grid;
+            grid-template-columns: 60px minmax(150px, 1fr) 90px 70px minmax(120px, 1.1fr);
+            align-items: center;
+            font-variant-numeric: tabular-nums
+        }
+        .vhead {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: var(--ink);
+            color: var(--paper);
+            font-family: "Courier New", monospace;
+            font-size: 11px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            font-weight: 600;
+            height: 38px
+        }
+        .vhead>div {
+            padding: 0 12px;
+            text-align: right
+        }
+        .vhead>div:nth-child(1),
+        .vhead>div:nth-child(2) {
+            text-align: left
+        }
+        .vspacer {
+            position: relative
+        }
+        .vwindow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0
+        }
+        .vrow {
+            height: 30px;
+            border-top: 1px solid var(--line);
+            font-size: 13px
+        }
+        .vrow>div {
+            padding: 0 12px;
+            text-align: right;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+        .vrow>div:nth-child(1) {
+            color: var(--muted);
+            text-align: left
+        }
+        .vrow>div:nth-child(2) {
+            text-align: left
+        }
+        .vrow:hover {
+            background: #fbf8f1
+        }
+        .vrow.ex>div {
+            color: #b3a98f;
+            font-style: italic
+        }
+        .vrow.ex>div:nth-child(1) {
+            color: #c9bfa5
+        }
+        .vrow.pf>div {
+            color: #a99c82;
+            font-style: italic
+        }
+        .vrow.pf>div:nth-child(1) {
+            color: #c9bfa5
+        }
+        .qbar {
+            display: inline-block;
+            height: 8px;
+            border-radius: 99px;
+            background: var(--accent);
+            margin-left: 8px;
+            vertical-align: middle;
+            opacity: .55
+        }
+        .exclude {
+            background: #fbf8f1;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            padding: 16px 18px;
+            margin-bottom: 18px
+        }
+        .ex-intro {
+            font-size: 13px;
+            color: var(--muted);
+            margin: 0 0 12px;
+            line-height: 1.5
+        }
+        .ex-add {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: wrap
+        }
+        .ex-add>div {
+            flex: 1;
+            min-width: 130px
+        }
+        .ex-add label {
+            margin-bottom: 5px
+        }
+        .ex-add input {
+            font-size: 15px;
+            padding: 9px 11px
+        }
+        .ex-add button {
+            font-family: "Courier New", monospace;
+            font-size: 12px;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            padding: 11px 16px;
+            background: var(--accent2);
+            color: #fff;
+            border: 0;
+            border-radius: 3px;
+            cursor: pointer;
+            white-space: nowrap
+        }
+        .ex-add button:hover {
+            background: #185a5a
+        }
+        .ex-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px
+        }
+        .ex-list:empty {
+            display: none
+        }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 99px;
+            padding: 6px 6px 6px 14px;
+            font-size: 13px;
+            font-variant-numeric: tabular-nums
+        }
+        .chip .days {
+            color: var(--muted);
+            font-size: 12px
+        }
+        .chip button {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 0;
+            background: #efe7d6;
+            color: var(--ink);
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+            padding: 0
+        }
+        .chip button:hover {
+            background: var(--accent);
+            color: #fff
+        }
+        .extag {
+            display: inline-block;
+            margin-left: 8px;
+            font-family: "Courier New", monospace;
+            font-size: 10px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--accent2);
+            font-style: normal
+        }
+        .profile {
+            background: #fbf8f1;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            padding: 16px 18px;
+            margin-bottom: 18px
+        }
+        .pf-toprow {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 4px
+        }
+        .pf-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            font-family: "Courier New", monospace;
+            font-size: 12px;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--accent2);
+            cursor: pointer
+        }
+        .pf-switch input {
+            width: auto;
+            margin: 0
+        }
+        .pf-intro {
+            font-size: 13px;
+            color: var(--muted);
+            margin: 8px 0 0;
+            line-height: 1.5
+        }
+        .pf-body {
+            margin-top: 14px
+        }
+        .pf-body[hidden] {
+            display: none
+        }
+        .pf-mode {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            margin-bottom: 14px
+        }
+        .pf-radio {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 14px;
+            color: var(--ink);
+            cursor: pointer
+        }
+        .pf-radio input {
+            width: auto;
+            margin: 0
+        }
+        .pf-setback {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px
+        }
+        .pf-setback input {
+            width: 74px;
+            font-size: 15px;
+            padding: 6px 9px
+        }
+        .pf-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px
+        }
+        .pf-btn {
+            font-family: "Courier New", monospace;
+            font-size: 11px;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            padding: 8px 12px;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 3px;
+            cursor: pointer;
+            color: var(--ink)
+        }
+        .pf-btn:hover {
+            background: #f0e9da
+        }
+        .pf-gridwrap {
+            overflow-x: auto;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            background: #fff
+        }
+        .pf-grid {
+            display: grid;
+            grid-template-columns: 46px repeat(24, 1fr);
+            gap: 2px;
+            padding: 8px;
+            min-width: 560px
+        }
+        .pf-corner {}
+        .pf-hh {
+            font-family: "Courier New", monospace;
+            font-size: 9px;
+            color: var(--muted);
+            text-align: center;
+            line-height: 1;
+            padding-bottom: 2px
+        }
+        .pf-dl {
+            font-family: "Courier New", monospace;
+            font-size: 11px;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--muted);
+            display: flex;
+            align-items: center
+        }
+        .pf-cell {
+            height: 22px;
+            border-radius: 2px;
+            background: #efe7d6;
+            cursor: pointer;
+            touch-action: none
+        }
+        .pf-cell.on {
+            background: var(--accent)
+        }
+        .pf-grid.off {
+            opacity: .5;
+            pointer-events: none
+        }
+        .pf-legend {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 10px;
+            line-height: 1.5
+        }
+        .pf-swatch {
+            display: inline-block;
+            width: 11px;
+            height: 11px;
+            border-radius: 2px;
+            vertical-align: -1px;
+            margin: 0 4px 0 2px
+        }
+        .pf-swatch.on {
+            background: var(--accent)
+        }
+        .pf-swatch.off {
+            background: #efe7d6
+        }
+        .pftag {
+            display: inline-block;
+            margin-left: 8px;
+            font-family: "Courier New", monospace;
+            font-size: 10px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--accent2);
+            font-style: normal
+        }
+        :root {
+            --t-bg: #0e1419;
+            --t-panel: #151d24;
+            --t-panel2: #1c272f;
+            --t-line: #2a3741;
+            --t-text: #e6eef2;
+            --t-muted: #8aa0ad;
+            --t-faint: #5a6b75;
+            --t-cal: #3fd0e0;
+            --t-area: #ffb454;
+            --t-len: #a6e36b;
+            --t-danger: #ff6b6b;
+            --t-hover: #3b4c58;
+            --t-btntext: #04181c;
+        }
+        body.light {
+            --t-bg: #eef1f4;
+            --t-panel: #ffffff;
+            --t-panel2: #f4f6f8;
+            --t-line: #d6dde3;
+            --t-text: #1a2228;
+            --t-muted: #5a6b75;
+            --t-faint: #90a0aa;
+            --t-cal: #0e93a8;
+            --t-area: #bf7510;
+            --t-len: #4d8a27;
+            --t-danger: #c0392b;
+            --t-hover: #b8c4cc;
+            --t-btntext: #ffffff;
+        }
+        body.contrast {
+            --t-bg: #000000;
+            --t-panel: #000000;
+            --t-panel2: #161616;
+            --t-line: #ffffff;
+            --t-text: #ffffff;
+            --t-muted: #e8e8e8;
+            --t-faint: #b4b4b4;
+            --t-cal: #00e5ff;
+            --t-area: #ffd000;
+            --t-len: #5dff5d;
+            --t-danger: #ff5050;
+            --t-hover: #333333;
+            --t-btntext: #000000;
+        }
+        body.sepia {
+            --t-bg: #e8dcc4;
+            --t-panel: #f7f1e3;
+            --t-panel2: #efe6d2;
+            --t-line: #d8cbb0;
+            --t-text: #3a3225;
+            --t-muted: #7a6e58;
+            --t-faint: #a99c82;
+            --t-cal: #0d8294;
+            --t-area: #a85d00;
+            --t-len: #5a7d1f;
+            --t-danger: #b03a2e;
+            --t-hover: #cbbf9f;
+            --t-btntext: #ffffff;
+        }
+        body.blueprint {
+            --t-bg: #0a2540;
+            --t-panel: #0d2c4d;
+            --t-panel2: #103458;
+            --t-line: #23507c;
+            --t-text: #dceaff;
+            --t-muted: #8fb4dd;
+            --t-faint: #5f86b0;
+            --t-cal: #5fd3ff;
+            --t-area: #ffd166;
+            --t-len: #8ce99a;
+            --t-danger: #ff8080;
+            --t-hover: #1c4a73;
+            --t-btntext: #0a2540;
+        }
+        body {
+            --paper: var(--t-panel);
+            --ink: var(--t-text);
+            --line: var(--t-line);
+            --muted: var(--t-muted);
+            --accent: var(--t-area);
+            --accent2: var(--t-cal);
+            --cold: var(--t-cal);
+            --warm: var(--t-area);
+            min-height: 100%;
+        }
+        html,
+        body {
+            height: 100%
+        }
+        .wrap {
+            padding-top: 24px
+        }
+        .panel,
+        .formula,
+        .eq,
+        .exclude,
+        .sortbtn,
+        .chip,
+        .profile,
+        .pf-btn,
+        .zoombtn {
+            background: var(--t-panel2)
+        }
+        input,
+        select,
+        .vscroll,
+        #chart,
+        .pf-gridwrap,
+        .pf-grid {
+            background: var(--t-bg)
+        }
+        .pf-btn {
+            color: var(--t-text)
+        }
+        .pf-btn:hover {
+            background: var(--t-hover)
+        }
+        .pf-cell,
+        .pf-swatch.off {
+            background: var(--t-hover)
+        }
+        .pf-cell.on,
+        .pf-swatch.on {
+            background: var(--t-area)
+        }
+        .eq {
+            border-left-color: var(--t-area)
+        }
+        .qbar {
+            background: var(--t-area)
+        }
+        .chip button {
+            background: var(--t-hover);
+            color: var(--t-text)
+        }
+        .chip button:hover {
+            background: var(--t-area);
+            color: var(--t-btntext)
+        }
+        .sortbtn:hover,
+        .zoombtn:hover {
+            background: var(--t-hover);
+            color: var(--t-text)
+        }
+        .vrow:hover {
+            background: var(--t-hover)
+        }
+        .vrow.ex>div,
+        .vrow.ex>div:nth-child(1),
+        .vrow.pf>div,
+        .vrow.pf>div:nth-child(1) {
+            color: var(--t-faint)
+        }
+        .headline,
+        .vhead {
+            background: var(--t-panel2);
+            color: var(--t-text)
+        }
+        .dlbtn,
+        .sortbtn.is-active,
+        .ex-add button,
+        .zoombtn.is-active {
+            background: var(--t-cal);
+            color: var(--t-btntext)
+        }
+        .dlbtn:hover,
+        .ex-add button:hover {
+            background: var(--t-cal);
+            opacity: .88
+        }
+
+        /* error / loading banner */
+        .load-msg {
+            padding: 14px 18px;
+            border-radius: 4px;
+            margin-top: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .load-msg.error {
+            background: rgba(255, 80, 80, .12);
+            border: 1px solid var(--t-danger);
+            color: var(--t-danger);
+        }
+        .load-msg.loading {
+            background: rgba(63, 208, 224, .10);
+            border: 1px solid var(--t-cal);
+            color: var(--t-text);
+        }
+        .load-msg.ok {
+            background: rgba(166, 227, 107, .10);
+            border: 1px solid var(--t-len);
+            color: var(--t-text);
+        }
+        .load-msg .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--t-line);
+            border-top-color: var(--t-cal);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+            flex-shrink: 0;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <p class="eyebrow">Warmteverlies &middot; gebouwanalyse</p>
+        <h1>Maximaal warmteverlies</h1>
+        <p class="lede">Schat het maximale warmteverlies (ontwerpvermogen) van een gebouw uit het
+            werkelijke jaarlijkse gasverbruik en de gewenste binnentemperatuur, gemeten tegen de
+            uurtemperaturen van een gekozen jaar.</p>
+
+        <div class="panel">
+            <div id="load-status" class="load-msg loading"><span class="spinner"></span>Bezig met laden van temperatuurgegevens …</div>
+
+            <div class="grid">
+                <div>
+                    <label for="verbruik">Gasverbruik per jaar</label>
+                    <div class="field"><input id="verbruik" type="number" value="4235" min="0" step="1"><span class="unit">m&sup3;</span></div>
+                </div>
+                <div>
+                    <label for="tbinnen">Binnentemperatuur (T binnen)</label>
+                    <div class="field"><input id="tbinnen" type="number" value="16" step="0.5"><span class="unit">&deg;C</span></div>
+                </div>
+                <div>
+                    <label for="jaar">Referentiejaar (uurtemperaturen)</label>
+                    <div class="field"><select id="jaar"><option value="">– laden …</option></select></div>
+                    <p class="src-note">Bron: <a href="https://www.daggegevens.knmi.nl/klimatologie/uurgegevens" target="_blank" rel="noopener">Uurwaarden van weerstations</a> (KNMI) &middot; geladen uit <code>240 Schiphol Airport.txt</code></p>
+                </div>
+                <div>
+                    <label for="oppervlakte">Oppervlakte gebouw</label>
+                    <div class="field"><input id="oppervlakte" type="number" value="120" min="1" step="1"><span class="unit">m&sup2;</span></div>
+                </div>
+            </div>
+
+            <details>
+                <summary>Constanten &amp; aannames</summary>
+                <div class="grid">
+                    <div>
+                        <label for="gas">Energie-inhoud gas</label>
+                        <div class="field"><input id="gas" type="number" value="8.7" step="0.1"><span class="unit">kWh/m&sup3;</span></div>
+                    </div>
+                    <div>
+                        <label for="rendement">Rendement ketel</label>
+                        <div class="field"><input id="rendement" type="number" value="90" step="1"><span class="unit">%</span></div>
+                    </div>
+                    <div>
+                        <label for="dtontwerp-in">Ontwerp-&Delta;T (vast)</label>
+                        <div class="field"><input id="dtontwerp-in" type="number" value="30" step="1"><span class="unit">K</span></div>
+                    </div>
+                    <div>
+                        <label for="stookgrens">Stookgrens-marge onder T binnen</label>
+                        <div class="field"><input id="stookgrens" type="number" value="5" step="0.5"><span class="unit">&deg;C</span></div>
+                    </div>
+                </div>
+                <label class="chk"><input id="userend" type="checkbox">
+                    <span>Rendement toepassen op Qtot. <em>Uit</em> reproduceert het oorspronkelijke
+                    werkblad (Qtot = gas &times; verbruik). <em>Aan</em> is fysisch correcter
+                    (nuttige warmte = gas &times; verbruik &times; rendement).</span></label>
+            </details>
+        </div>
+
+        <div class="result">
+            <div class="headline">
+                <span class="lab">Qmax &middot; maximaal warmteverlies</span>
+                <span class="big" id="qmax">&mdash;<small>kW</small></span>
+            </div>
+            <table>
+                <tr><td>Warmteverlies per m²<span class="note" id="perm2-f">Qmax / oppervlakte</span></td><td id="perm2">&mdash;</td></tr>
+                <tr><td>Qtot — geleverde warmte<span class="note" id="qtot-f"></span></td><td id="qtot">&mdash;</td></tr>
+                <tr><td>&Sigma; dT — graaduren met stookbehoefte</td><td id="dttot">&mdash;</td></tr>
+                <tr><td>Ht — warmteverliescoëfficiënt (U&middot;A)<span class="note">Qtot / &Sigma;dT</span></td><td id="ht">&mdash;</td></tr>
+                <tr><td>Ontwerp-&Delta;T<span class="note">vaste ontwerpcondities</span></td><td id="dtontwerp">&mdash;</td></tr>
+                <tr><td>Stookuren<span class="note">uren waarin verwarming nodig is</span></td><td id="stookuren">&mdash;</td></tr>
+            </table>
+        </div>
+
+        <p class="foot">
+            <strong>Model.</strong> Per uur geldt
+            <span class="formula">dT = ALS(T&nbsp;buiten &gt; T&nbsp;binnen − marge; 0; T&nbsp;binnen − T&nbsp;buiten)</span>,
+            zodat alleen uren onder de stookgrens meetellen. De warmteverliescoëfficiënt
+            <span class="formula">Ht = Qtot / &Sigma;dT</span> verdeelt de jaarwarmte over de graaduren,
+            en <span class="formula">Qmax = Ht &times; 30</span> geeft het vermogen bij de vaste
+            ontwerpconditie van 30 K. De binnentemperatuur bepaalt alleen hoe Qtot over de graaduren
+            wordt verdeeld (de noemer &Sigma;dT) en telt níét mee in de ontwerp-&Delta;T zelf.
+            Schrikkeljaren (2016, 2020, 2024) tellen 8784 uur — de extra dag zit
+            automatisch in de som.
+        </p>
+
+        <div class="chart-card">
+            <div class="chart-head">
+                <div>
+                    <p class="eyebrow" style="margin:0 0 4px">Jaaroverzicht</p>
+                    <h2 id="chart-title">Gasverbruik &amp; buitentemperatuur</h2>
+                    <p id="zoom-range" class="zoom-range">Heel jaar</p>
+                </div>
+                <div class="chart-tools">
+                    <div class="zoombar" role="group" aria-label="Zoomniveau">
+                        <button class="zoombtn is-active" data-zoom="year" type="button">Jaar</button>
+                        <button class="zoombtn" data-zoom="month" type="button">Maand</button>
+                        <button class="zoombtn" data-zoom="week" type="button">Week</button>
+                    </div>
+                    <div class="panbar">
+                        <button id="pan-prev" class="zoombtn" type="button" aria-label="Vorige periode">&lsaquo;</button>
+                        <button id="pan-next" class="zoombtn" type="button" aria-label="Volgende periode">&rsaquo;</button>
+                    </div>
+                    <button id="dl-chart" class="dlbtn" type="button">Download PNG</button>
+                </div>
+            </div>
+            <canvas id="chart"></canvas>
+            <p class="zoom-hint">Sleep de grafiek om te verschuiven en scroll om te zoomen — of gebruik de knoppen.
+                Maximaal inzoomen toont één week.</p>
+        </div>
+
+        <div class="hourly">
+            <div class="hourly-head">
+                <div>
+                    <p class="eyebrow" style="margin:0 0 4px">Uur voor uur</p>
+                    <h2 id="hourly-title">Warmteverlies per uur</h2>
+                </div>
+                <div class="sortbar" role="group" aria-label="Sorteren op Q">
+                    <button class="sortbtn is-active" data-sort="chrono">Chronologisch</button>
+                    <button class="sortbtn" data-sort="desc">Q hoog → laag</button>
+                    <button class="sortbtn" data-sort="asc">Q laag → hoog</button>
+                </div>
+            </div>
+            <div class="profile">
+                <div class="pf-toprow">
+                    <label class="pf-switch"><input id="pf-on" type="checkbox">
+                        <span>Weekprofiel gebruiken</span></label>
+                </div>
+                <p class="pf-intro">Stel per dag van de week in welke uren je verwarming nodig hebt.
+                    Buiten die uren reken je met een lagere temperatuur of zet je de verwarming volledig
+                    uit. Uitgesloten periodes (vakantie, hieronder) gaan vóór het weekprofiel: op die dagen
+                    telt elk uur als 0.</p>
+
+                <div id="pf-body" class="pf-body" hidden>
+                    <div class="pf-mode">
+                        <label class="pf-radio"><input type="radio" name="pf-mode" value="off" checked>
+                            <span>Buiten de stookuren de verwarming volledig uit (dT = 0)</span></label>
+                        <label class="pf-radio"><input type="radio" name="pf-mode" value="setback">
+                            <span class="pf-setback">Buiten de stookuren verlaagde temperatuur van
+                                <input id="pf-setback" type="number" value="12" step="0.5"> &deg;C</span></label>
+                    </div>
+
+                    <div class="pf-actions">
+                        <button class="pf-btn" type="button" data-fill="all">Alles aan</button>
+                        <button class="pf-btn" type="button" data-fill="none">Alles uit</button>
+                        <button class="pf-btn" type="button" data-fill="office">Kantooruren (ma–vr 8–18)</button>
+                        <button class="pf-btn" type="button" data-copymon>Maandag naar alle dagen</button>
+                    </div>
+
+                    <div class="pf-gridwrap">
+                        <div id="pf-grid" class="pf-grid"></div>
+                    </div>
+                    <p class="pf-legend"><span class="pf-swatch on"></span>verwarmen
+                        &nbsp;&middot;&nbsp; <span class="pf-swatch off"></span>buiten stookuren.
+                        Klik of sleep over de cellen om te schilderen.</p>
+                </div>
+            </div>
+
+            <div class="exclude">
+                <p class="ex-intro">Sluit periodes uit waarin je weg was en geen gas/verwarming gebruikte
+                    (bv. vakantie). Die dagen tellen als 0 en vallen uit de berekening van &Sigma;dT en Ht.</p>
+                <div class="ex-add">
+                    <div><label for="ex-from">Van</label>
+                        <div class="field"><input id="ex-from" type="date"></div></div>
+                    <div><label for="ex-to">Tot en met</label>
+                        <div class="field"><input id="ex-to" type="date"></div></div>
+                    <button id="ex-add-btn" type="button">Periode uitsluiten</button>
+                </div>
+                <div id="ex-list" class="ex-list"></div>
+            </div>
+            <div class="vscroll" id="vscroll">
+                <div class="vinner">
+                    <div class="vhead">
+                        <div>#</div><div>Datum &amp; tijd</div><div>T buiten</div><div>dT</div><div>Q</div>
+                    </div>
+                    <div class="vspacer" id="vspacer"><div class="vwindow" id="vwindow"></div></div>
+                </div>
+            </div>
+            <p class="foot" style="margin-top:12px">
+                Q per uur = <span class="formula">Ht &times; dT</span>. Uren boven de stookgrens hebben
+                dT&nbsp;=&nbsp;0 en dus geen verlies. Som van alle Q komt overeen met Qtot.
+            </p>
+        </div>
+
+        <details class="explain">
+            <summary><h2>Hoe wordt dit berekend?</h2><span class="toggle"></span></summary>
+            <div class="explain-body">
+                <p>Het doel is het <strong>maximale warmteverlies</strong> (Qmax) van een gebouw te schatten
+                    uit één bekend gegeven — het werkelijke jaarlijkse gasverbruik — gecombineerd met de
+                    gemeten uurtemperaturen van een referentiejaar. De gedachte: het gas dat je over een heel
+                    jaar verstookt vertelt hoeveel warmte het gebouw kwijtraakt, en door dat te koppelen aan
+                    hoe koud het dat jaar was, kun je terugrekenen naar het vermogen bij ontwerpcondities.</p>
+
+                <h3>Stap 1 · Warmtevraag per uur (dT)</h3>
+                <p>Voor elk uur van het jaar wordt het temperatuurverschil tussen binnen en buiten bepaald.
+                    Pas onder een stookgrens telt dat verschil mee: zolang het buiten warmer is dan de
+                    binnentemperatuur min een marge (standaard 5&nbsp;°C), is verwarmen niet nodig en is dT&nbsp;=&nbsp;0.
+                    Dit vangt de gratis warmte op van zon, bewoners en apparaten.</p>
+                <span class="eq">dT = ALS( T_buiten &gt; T_binnen − marge ; 0 ; T_binnen − T_buiten )</span>
+
+                <h3>Stap 2 · Som van de warmtevraag (ΣdT)</h3>
+                <p>Alle uurlijkse dT-waarden worden bij elkaar opgeteld tot de totale graaduren van het jaar.
+                    Dit is de noemer waarover het jaarverbruik straks wordt verdeeld. Uitgesloten periodes
+                    (vakantie) en uren boven de stookgrens dragen hier niets aan bij.</p>
+                <span class="eq">ΣdT = som van alle dT over het jaar</span>
+
+                <h3>Stap 3 · Geleverde warmte (Qtot)</h3>
+                <p>Het gasverbruik wordt omgerekend naar energie via de energie-inhoud van aardgas
+                    (standaard 8,7&nbsp;kWh/m³). Standaard wordt het rendement níét meegerekend, zodat dit
+                    het oorspronkelijke werkblad volgt; via een vinkje kun je de nuttige warmte
+                    (gas × verbruik × rendement) gebruiken.</p>
+                <span class="eq">Qtot = gas-inhoud × jaarverbruik   (× rendement, optioneel)</span>
+
+                <h3>Stap 4 · Warmteverliescoëfficiënt (Ht)</h3>
+                <p>De geleverde warmte gedeeld door de totale graaduren geeft de warmteverliescoëfficiënt
+                    Ht — feitelijk het U·A van het gebouw: hoeveel kW het per graad temperatuurverschil
+                    verliest. Hoe groter ΣdT (een koud jaar), hoe lager Ht voor hetzelfde gasverbruik.</p>
+                <span class="eq">Ht = Qtot / ΣdT</span>
+
+                <h3>Stap 5 · Maximaal warmteverlies (Qmax)</h3>
+                <p>Het maximale warmteverlies wordt altijd berekend bij een <strong>vast ontwerp-temperatuurverschil
+                        van 30&nbsp;K</strong> — de koude ontwerpconditie, die kouder is dan welk werkelijk uur dan ook.
+                    De binnentemperatuur bepaalt alléén hoe Qtot over de graaduren wordt verdeeld (de noemer ΣdT)
+                    en zit níét in deze 30&nbsp;K.</p>
+                <span class="eq">Qmax = Ht × 30</span>
+
+                <h3>Verdeling over het jaar &amp; de grafiek</h3>
+                <p>Per uur is het warmteverlies Q = Ht × dT. De som van alle uurwaarden komt exact overeen met
+                    Qtot. Voor de jaargrafiek wordt het gasverbruik per dag afgeleid door Qtot evenredig met de
+                    warmtevraag te verdelen, zodat de dagelijkse m³ optellen tot je werkelijke jaartotaal.</p>
+
+                <h3>Uitgesloten periodes &amp; schrikkeljaren</h3>
+                <p>Sluit je een periode uit (bijvoorbeeld vakantie zonder verwarming), dan worden die uren op 0
+                    gezet en vallen ze uit ΣdT. Omdat hetzelfde Qtot dan over minder graaduren wordt verdeeld,
+                    stijgt Ht — en dus Qmax. Schrikkeljaren (2016, 2020, 2024) tellen 8784 in plaats van 8760 uur;
+                    de extra dag zit automatisch in alle sommen.</p>
+
+                <p style="color:var(--muted);font-size:13.5px">Let op: dit is een schatting op basis van één
+                    jaartotaal aan gas, geen gemeten uur- of dagverbruik. De methode is intern consistent, maar de
+                    nauwkeurigheid hangt af van hoe representatief het gekozen weerjaar en de aannames zijn.</p>
+            </div>
+        </details>
+    </div>
+
+    <script>
+        // ===== DATA LOADER =====
+        // Lees temperatuurgegevens uit "240 Schiphol Airport.txt" in dezelfde map.
+        // Het bestand heeft het formaat: STN,YYYYMMDD,HH,T (T in 0.1 °C)
+        const DATA_FILE = '240 Schiphol Airport.txt';
+        let TEMPS = {};
+        let dataLoaded = false;
+        let dataLoadError = false;
+
+        const statusEl = document.getElementById('load-status');
+
+        function setStatus(html, cls) {
+            if (!statusEl) return;
+            statusEl.className = 'load-msg ' + (cls || '');
+            statusEl.innerHTML = html;
+        }
+
+        async function loadData() {
+            try {
+                setStatus('<span class="spinner"></span>Bezig met laden van temperatuurgegevens …', 'loading');
+                const resp = await fetch(DATA_FILE);
+                if (!resp.ok) throw new Error('Bestand niet gevonden of niet leesbaar (HTTP ' + resp.status + ')');
+                const text = await resp.text();
+                parseData(text);
+                dataLoaded = true;
+                dataLoadError = false;
+                setStatus('✔ ' + Object.keys(TEMPS).length + ' jaren geladen uit <code>' + DATA_FILE + '</code>', 'ok');
+                populateYearDropdown();
+                calc();
+            } catch (e) {
+                dataLoadError = true;
+                console.error('Data laadfout:', e);
+                setStatus(
+                    '❌ Kon <code>' + DATA_FILE +
+                    '</code> niet laden. Zorg dat het bestand in dezelfde map staat als deze HTML-pagina.<br><span style="font-size:13px;opacity:0.7;">Fout: ' +
+                    e.message + '</span>',
+                    'error'
+                );
+                // Toon een lege dropdown en een placeholder
+                const sel = document.getElementById('jaar');
+                sel.innerHTML = '<option value="">– geen data –</option>';
+            }
+        }
+
+        function parseData(text) {
+            const lines = text.split(/\r?\n/);
+            const yearData = {};
+
+            for (const raw of lines) {
+                const line = raw.trim();
+                if (!line || line.startsWith('#')) continue;
+
+                // Formaat: STN,YYYYMMDD,HH,T  (met eventuele extra spaties)
+                const parts = line.split(',').map(s => s.trim());
+                if (parts.length < 4) continue;
+
+                const dateStr = parts[1]; // YYYYMMDD
+                if (dateStr.length < 8) continue;
+                const year = dateStr.substring(0, 4);
+                const tempRaw = parseFloat(parts[3]);
+                if (isNaN(tempRaw)) continue;
+                const tempC = tempRaw / 10; // 0.1 °C → °C
+
+                if (!yearData[year]) yearData[year] = [];
+                yearData[year].push(tempC);
+            }
+
+            // Controleer of elk jaar het juiste aantal uren heeft (8760 of 8784)
+            // En sorteer de jaren
+            TEMPS = {};
+            for (const [year, arr] of Object.entries(yearData)) {
+                const expected = isLeapYear(parseInt(year)) ? 8784 : 8760;
+                if (arr.length === expected) {
+                    TEMPS[year] = arr;
+                } else {
+                    console.warn('Jaar ' + year + ' heeft ' + arr.length + ' i.p.v. ' + expected +
+                        ' uurwaarden — overgeslagen.');
+                }
+            }
+
+            if (Object.keys(TEMPS).length === 0) {
+                throw new Error('Geen geldige jaargegevens gevonden in het bestand.');
+            }
+        }
+
+        function isLeapYear(y) {
+            return (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0);
+        }
+
+        function populateYearDropdown() {
+            const sel = document.getElementById('jaar');
+            const current = sel.value;
+            const years = Object.keys(TEMPS).sort();
+            sel.innerHTML = '';
+            for (const y of years) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                if (y === current || (current === '' && y === years[0])) opt.selected = true;
+                sel.appendChild(opt);
+            }
+            if (sel.value === '' && years.length) {
+                sel.value = years[0];
+            }
+        }
+
+        // ===== REST VAN DE ORIGINELE CODE (aangepast) =====
+        // Alleen de TEMPS-afhankelijke delen zijn herschreven; de rest blijft vrijwel ongewijzigd.
+
+        const $ = id => document.getElementById(id);
+        const sel = $('jaar');
+
+        const fmt = (n, d = 1) => n.toLocaleString('nl-NL', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+        function calc() {
+            if (!dataLoaded || dataLoadError) {
+                // Als data nog niet geladen is, toon placeholders
+                $('qmax').innerHTML = '&mdash;<small>kW</small>';
+                $('perm2').textContent = '—';
+                $('qtot').textContent = '—';
+                $('dttot').textContent = '—';
+                $('ht').textContent = '—';
+                $('dtontwerp').innerHTML = '—';
+                $('stookuren').textContent = '—';
+                return;
+            }
+
+            const year = sel.value;
+            const temps = TEMPS[year];
+            if (!temps) {
+                // Fallback: probeer eerste beschikbare jaar
+                const years = Object.keys(TEMPS).sort();
+                if (years.length) {
+                    sel.value = years[0];
+                    return calc();
+                }
+                return;
+            }
+
+            const Tbinnen = parseFloat($('tbinnen').value);
+            const verbruik = parseFloat($('verbruik').value);
+            const gas = parseFloat($('gas').value);
+            const rend = parseFloat($('rendement').value) / 100;
+            const dTontwerp = parseFloat($('dtontwerp-in').value);
+            const marge = parseFloat($('stookgrens').value);
+            const useRend = $('userend').checked;
+            const opp = parseFloat($('oppervlakte').value);
+
+            const leap = temps.length > 8760;
+
+            if ([Tbinnen, verbruik, gas, rend, dTontwerp, marge].some(v => !isFinite(v))) { return; }
+
+            const days = temps.length / 24;
+            const exDay = buildExDays(parseInt(year), days);
+            const dowOf = new Array(days);
+            for (let d = 0; d < days; d++) dowOf[d] = (new Date(parseInt(year), 0, 1 + d).getDay() + 6) % 7; // 0=ma..6=zo
+            const useProfile = PROFILE_ON;
+            const pfOff = PROFILE_MODE === 'off';
+            const Tset = parseFloat($('pf-setback').value);
+            const TsetOK = isFinite(Tset);
+
+            let dTtot = 0,
+                stookuren = 0,
+                exUren = 0;
+            for (let i = 0; i < temps.length; i++) {
+                const off = Math.floor(i / 24);
+                if (exDay[off]) { exUren++; continue; }
+                let target = Tbinnen;
+                if (useProfile && !HEAT[dowOf[off]][i % 24]) {
+                    if (pfOff) continue;
+                    target = TsetOK ? Tset : Tbinnen;
+                }
+                const tb = temps[i];
+                if (tb > target - marge) continue;
+                dTtot += (target - tb);
+                stookuren++;
+            }
+            const Qtot = useRend ? gas * verbruik * rend : gas * verbruik;
+            const Ht = dTtot > 0 ? Qtot / dTtot : NaN;
+            const Qmax = Ht * dTontwerp;
+
+            $('qmax').innerHTML = (isFinite(Qmax) ? fmt(Qmax, 2) : '&mdash;') + '<small>kW</small>';
+            const perm2 = (isFinite(Qmax) && opp > 0) ? Qmax * 1000 / opp : NaN;
+            $('perm2').innerHTML = isFinite(perm2) ? '<strong>' + fmt(perm2, 1) + '</strong> W/m²' : '—';
+            $('perm2-f').textContent = isFinite(perm2) ?
+                fmt(Qmax, 2) + ' kW / ' + fmt(opp, 0) + ' m²' :
+                'Qmax / oppervlakte';
+            $('qtot').textContent = fmt(Qtot, 1) + ' kWh';
+            $('qtot-f').textContent = useRend ?
+                fmt(gas, 1) + ' × ' + fmt(verbruik, 0) + ' × ' + fmt(rend * 100, 0) + '%' :
+                fmt(gas, 1) + ' kWh/m³ × ' + fmt(verbruik, 0) + ' m³';
+            $('dttot').textContent = fmt(dTtot, 1) + ' °C·h';
+            $('ht').textContent = isFinite(Ht) ? fmt(Ht, 4) + ' kW/K' : '—';
+            $('dtontwerp').innerHTML = fmt(dTontwerp, 1) + ' K' + (leap ? '<span class="leap">+1 dag</span>' : '');
+            $('stookuren').textContent = stookuren.toLocaleString('nl-NL') + ' van ' + temps.length.toLocaleString(
+                'nl-NL') +
+                (exUren ? '  ·  ' + exUren.toLocaleString('nl-NL') + ' u uitgesloten' : '');
+
+            // Build hourly rows
+            const base = new Date(parseInt(year), 0, 1);
+            HOURS = temps.map((tb, i) => {
+                const off = Math.floor(i / 24),
+                    ex = exDay[off];
+                let target = Tbinnen,
+                    pf = null;
+                if (!ex && useProfile && !HEAT[dowOf[off]][i % 24]) {
+                    if (pfOff) { pf = 'off'; } else { target = TsetOK ? Tset : Tbinnen;
+                        pf = 'setback'; }
+                }
+                const dt = (ex || pf === 'off' || tb > target - marge) ? 0 : (target - tb);
+                return { i: i + 1, off, uur: (i % 24) + 1, tb, dt, q: Ht * dt, ex, pf };
+            });
+            const maxQ = Math.max(0, ...HOURS.map(r => r.q));
+            HMAX = isFinite(maxQ) && maxQ > 0 ? maxQ : 1;
+            HBASE = base;
+            HYEAR = parseInt(year);
+            HTITLE = 'Warmteverlies per uur — ' + year;
+            renderHourly();
+
+            // Daily aggregation
+            const nDays = temps.length / 24;
+            const dGas = new Float64Array(nDays),
+                dTsum = new Float64Array(nDays),
+                dCnt = new Int32Array(nDays);
+            for (const r of HOURS) {
+                const frac = Qtot > 0 ? r.q / Qtot : 0;
+                dGas[r.off] += frac * verbruik;
+                dTsum[r.off] += r.tb;
+                dCnt[r.off]++;
+            }
+            const dTavg = new Float64Array(nDays);
+            for (let d = 0; d < nDays; d++) dTavg[d] = dCnt[d] ? dTsum[d] / dCnt[d] : 0;
+
+            const hGas = new Float64Array(temps.length),
+                hTavg = new Float64Array(temps.length);
+            for (const r of HOURS) {
+                const frac = Qtot > 0 ? r.q / Qtot : 0;
+                hGas[r.i - 1] = frac * verbruik / 24;
+                hTavg[r.i - 1] = r.tb;
+            }
+
+            const yearChanged = (HYEAR !== DYEAR);
+            DGAS = dGas;
+            DTAVG = dTavg;
+            DNDAYS = nDays;
+            HGAS = hGas;
+            HTAVG = hTavg;
+            HNHOURS = temps.length;
+            DYEAR = HYEAR;
+            if (VIEW_DAYS === 0 || yearChanged) { VIEW_START = 0;
+                VIEW_DAYS = nDays; }
+            VIEW_DAYS = Math.max(7, Math.min(VIEW_DAYS, nDays));
+            VIEW_START = Math.max(0, Math.min(VIEW_START, nDays - VIEW_DAYS));
+            drawChart();
+            updateZoomUI();
+        }
+
+        // ---- De rest van de code blijft hetzelfde als het origineel ----
+        // (alle variabelen en functies die hierboven niet zijn gedefinieerd, worden hieronder herhaald)
+
+        let HOURS = [],
+            SROWS = [],
+            HMAX = 1,
+            HBASE = new Date(),
+            HYEAR = 2015,
+            HTITLE = '',
+            SORT = 'chrono';
+        const MND = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+        const ROWH = 30,
+            BUF = 8;
+        const fnum = n => n.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        function renderHourly() {
+            $('hourly-title').textContent = HTITLE;
+            SROWS = SORT === 'chrono' ? HOURS : HOURS.slice().sort((a, b) => SORT === 'desc' ? b.q - a.q : a.q - b.q);
+            $('vspacer').style.height = (SROWS.length * ROWH) + 'px';
+            $('vscroll').scrollTop = 0;
+            renderWindow();
+        }
+
+        function renderWindow() {
+            const sc = $('vscroll'),
+                off = $('vspacer').offsetTop;
+            let start = Math.floor((sc.scrollTop - off) / ROWH) - BUF;
+            if (start < 0) start = 0;
+            const count = Math.ceil(sc.clientHeight / ROWH) + BUF * 2;
+            const end = Math.min(SROWS.length, start + count);
+            const parts = new Array(end - start);
+            for (let k = start; k < end; k++) {
+                const r = SROWS[k];
+                const d = new Date(HYEAR, 0, 1 + r.off);
+                const stamp = d.getDate() + ' ' + MND[d.getMonth()] + ' ' + d.getFullYear() + ', ' + String(r.uur - 1)
+                    .padStart(2, '0') + ':00';
+                const w = Math.round((r.q / HMAX) * 60);
+                const cls = r.ex ? ' ex' : (r.pf === 'off' ? ' pf' : '');
+                let last;
+                if (r.ex) last = '<span class="extag">vrij</span>';
+                else if (r.pf === 'off') last = '<span class="pftag">uit</span>';
+                else last = (r.pf === 'setback' ? '<span class="pftag">verlaagd</span>' : '') +
+                    '<span class="qbar" style="width:' + w + 'px"></span>';
+                parts[k - start] = '<div class="vrow' + cls + '"><div>' + r.i + '</div><div>' + stamp + '</div><div>' +
+                    r.tb.toLocaleString('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) +
+                    ' °C</div><div>' +
+                    fnum(r.dt) + '</div><div>' + fnum(r.q) + ' kW' + last + '</div></div>';
+            }
+            $('vwindow').style.transform = 'translateY(' + (start * ROWH) + 'px)';
+            $('vwindow').innerHTML = parts.join('');
+        }
+        $('vscroll').addEventListener('scroll', () => { requestAnimationFrame(renderWindow); }, { passive: true });
+
+        // ---- Chart ----
+        let DGAS = null,
+            DTAVG = null,
+            DNDAYS = 0;
+        let HGAS = null,
+            HTAVG = null,
+            HNHOURS = 0;
+        let DYEAR = 2015;
+        let VIEW_START = 0,
+            VIEW_DAYS = 0;
+        let CHART_GEO = { x0: 58, pw: 804, viewStart: 0, viewDays: 0 };
+        const CW = 920,
+            CH = 380,
+            DPR = 2;
+
+        function niceMax(v) { if (v <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v)));
+            const n = v / p;
+            const s = n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10; return s * p; }
+
+        function linearRegression(data) {
+            const n = data.length;
+            let sx = 0,
+                sy = 0,
+                sxx = 0,
+                sxy = 0;
+            for (let i = 0; i < n; i++) { sx += i;
+                sy += data[i];
+                sxx += i * i;
+                sxy += i * data[i]; }
+            const slope = (n * sxy - sx * sy) / (n * sxx - sx * sx);
+            const intercept = (sy - slope * sx) / n;
+            return { slope, intercept };
+        }
+
+        function drawChart() {
+            if (!DGAS) return;
+            const vs = VIEW_START,
+                vd = VIEW_DAYS;
+            const useHourly = vd <= 31 && HGAS && HTAVG;
+            const gas = useHourly ? HGAS : DGAS;
+            const tavg = useHourly ? HTAVG : DTAVG;
+            let dataPoints = vd;
+            let dataStart = vs;
+            if (useHourly) { dataStart = vs * 24;
+                dataPoints = vd * 24; }
+
+            const cv = $('chart');
+            cv.width = CW * DPR;
+            cv.height = CH * DPR;
+            cv.style.aspectRatio = CW + '/' + CH;
+            const ctx = cv.getContext('2d');
+            ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+            const cs = getComputedStyle(document.body);
+            const P = (n, f) => { const v = cs.getPropertyValue(n).trim(); return v || f; };
+            const C = {
+                bg: P('--t-bg', '#ffffff'),
+                text: P('--t-text', '#3a3327'),
+                muted: P('--t-muted', '#6b6354'),
+                line: P('--t-line', '#ece5d6'),
+                warm: P('--t-area', '#c75b39'),
+                cold: P('--t-cal', '#3d6fb4'),
+                axis: P('--t-text', '#0a1722')
+            };
+            ctx.clearRect(0, 0, CW, CH);
+            ctx.fillStyle = C.bg;
+            ctx.fillRect(0, 0, CW, CH);
+            const L = 58,
+                R = 58,
+                T = 48,
+                B = 46,
+                pw = CW - L - R,
+                ph = CH - T - B,
+                x0 = L,
+                y0 = T + ph;
+
+            // legend
+            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'left';
+            ctx.font = '13px Georgia,"Times New Roman",serif';
+            let lx = L,
+                ly = 20;
+            ctx.fillStyle = C.warm;
+            ctx.fillRect(lx, ly - 7, 14, 14);
+            ctx.fillStyle = C.text;
+            const gasLabel = useHourly ? 'Gasverbruik (m³/uur)' : 'Gasverbruik (m³/dag)';
+            ctx.fillText(gasLabel, lx + 21, ly);
+            lx += 21 + ctx.measureText(gasLabel).width + 30;
+            ctx.strokeStyle = C.cold;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(lx, ly);
+            ctx.lineTo(lx + 20, ly);
+            ctx.stroke();
+            ctx.fillStyle = C.text;
+            ctx.fillText('Gem. buitentemperatuur (°C)', lx + 27, ly);
+
+            let gm = 0.0001,
+                tlo = 0,
+                thi = 1;
+            for (let d = 0; d < dataPoints; d++) {
+                const g = gas[dataStart + d],
+                    t = tavg[dataStart + d];
+                if (g > gm) gm = g;
+                if (t < tlo) tlo = t;
+                if (t > thi) thi = t;
+            }
+            const gMax = niceMax(gm);
+            let tMin = Math.floor(tlo / 5) * 5,
+                tMax = Math.ceil(thi / 5) * 5;
+            if (tMax === tMin) tMax += 5;
+            const gy = v => y0 - (v / gMax) * ph,
+                ty = v => y0 - ((v - tMin) / (tMax - tMin)) * ph,
+                dx = d => x0 + (d + 0.5) * (pw / dataPoints);
+
+            ctx.font = '11px "Courier New",monospace';
+            ctx.textBaseline = 'middle';
+            for (let i = 0; i <= 4; i++) {
+                const v = gMax * i / 4,
+                    y = gy(v);
+                ctx.strokeStyle = C.line;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x0, y);
+                ctx.lineTo(x0 + pw, y);
+                ctx.stroke();
+                ctx.fillStyle = C.muted;
+                ctx.textAlign = 'right';
+                ctx.fillText(v.toFixed(v < 10 ? 1 : 0), x0 - 8, y);
+            }
+            ctx.textAlign = 'left';
+            for (let i = 0; i <= 4; i++) { const v = tMin + (tMax - tMin) * i / 4;
+                ctx.fillStyle = C.cold;
+                ctx.fillText(Math.round(v) + '°', x0 + pw + 8, ty(v)); }
+
+            const bw = Math.max(1, (pw / dataPoints) * 0.9);
+            ctx.fillStyle = C.warm;
+            ctx.globalAlpha = 0.82;
+            for (let d = 0; d < dataPoints; d++) { const h = y0 - gy(gas[dataStart + d]); if (h > 0.2) ctx.fillRect(dx(
+                    d) - bw / 2, gy(gas[dataStart + d]), bw, h); }
+            ctx.globalAlpha = 1;
+
+            const gasData = Array.from({ length: dataPoints }, (_, i) => gas[dataStart + i]);
+            const gasRegression = linearRegression(gasData);
+            ctx.strokeStyle = C.warm;
+            ctx.lineWidth = 2.2;
+            ctx.globalAlpha = 0.6;
+            ctx.setLineDash([6, 4]);
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            for (let d = 0; d < dataPoints; d++) {
+                const trend = gasRegression.intercept + gasRegression.slope * d;
+                const x = dx(d),
+                    y = gy(trend);
+                d ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.globalAlpha = 1;
+
+            if (tMin < 0 && tMax > 0) { ctx.strokeStyle = C.line;
+                ctx.setLineDash([4, 4]);
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x0, ty(0));
+                ctx.lineTo(x0 + pw, ty(0));
+                ctx.stroke();
+                ctx.setLineDash([]); }
+
+            ctx.strokeStyle = C.cold;
+            ctx.lineWidth = 1.6;
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            for (let d = 0; d < dataPoints; d++) { const x = dx(d),
+                    y = ty(tavg[dataStart + d]);
+                d ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+            ctx.stroke();
+
+            const tempData = Array.from({ length: dataPoints }, (_, i) => tavg[dataStart + i]);
+            const tempRegression = linearRegression(tempData);
+            ctx.strokeStyle = C.cold;
+            ctx.lineWidth = 2.2;
+            ctx.globalAlpha = 0.6;
+            ctx.setLineDash([6, 4]);
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            for (let d = 0; d < dataPoints; d++) {
+                const trend = tempRegression.intercept + tempRegression.slope * d;
+                const x = dx(d),
+                    y = ty(trend);
+                d ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.globalAlpha = 1;
+
+            ctx.strokeStyle = C.axis;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x0, T);
+            ctx.lineTo(x0, y0);
+            ctx.lineTo(x0 + pw, y0);
+            ctx.lineTo(x0 + pw, T);
+            ctx.stroke();
+
+            ctx.fillStyle = C.muted;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            const dLabel = abs => { const dt = new Date(DYEAR, 0, 1 + abs); return dt.getDate() + ' ' + MND[dt
+                    .getMonth()]; };
+            const colDay = pw / dataPoints;
+
+            if (useHourly) {
+                const isMonthly = vd > 21;
+                const dayStep = isMonthly ? 5 : 1;
+                const daysShown = new Set();
+                for (let h = 0; h < dataPoints; h++) {
+                    const ahour = dataStart + h;
+                    const d = Math.floor(ahour / 24);
+                    if (daysShown.has(d)) continue;
+                    if (d % dayStep !== 0) continue;
+                    daysShown.add(d);
+                    const x = dx(h);
+                    ctx.strokeStyle = C.line;
+                    ctx.beginPath();
+                    ctx.moveTo(x, T);
+                    ctx.lineTo(x, y0);
+                    ctx.stroke();
+                    ctx.fillStyle = C.muted;
+                    ctx.fillText(dLabel(d), x, y0 + 8);
+                }
+            } else if (vd > 70) {
+                for (let m = 0; m < 12; m++) {
+                    const abs = Math.round((new Date(DYEAR, m, 1) - new Date(DYEAR, 0, 1)) / 86400000);
+                    if (abs < vs || abs >= vs + vd) continue;
+                    const xl = x0 + (abs - vs) * colDay;
+                    ctx.strokeStyle = C.line;
+                    ctx.beginPath();
+                    ctx.moveTo(xl, T);
+                    ctx.lineTo(xl, y0);
+                    ctx.stroke();
+                    ctx.fillStyle = C.muted;
+                    ctx.fillText(MND[m], xl + colDay * 15, y0 + 8);
+                }
+            } else {
+                const step = vd > 21 ? 7 : 1;
+                for (let d = 0; d < vd; d++) {
+                    const abs = vs + d;
+                    if (abs % step !== 0) continue;
+                    const x = dx(d);
+                    ctx.strokeStyle = C.line;
+                    ctx.beginPath();
+                    ctx.moveTo(x, T);
+                    ctx.lineTo(x, y0);
+                    ctx.stroke();
+                    ctx.fillStyle = C.muted;
+                    ctx.fillText(dLabel(abs), x, y0 + 8);
+                }
+            }
+
+            ctx.save();
+            ctx.translate(14, T + ph / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = C.warm;
+            const yLabel = useHourly ? 'm³/uur' : 'm³/dag';
+            ctx.fillText(yLabel, 0, 0);
+            ctx.restore();
+            ctx.save();
+            ctx.translate(CW - 12, T + ph / 2);
+            ctx.rotate(Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = C.cold;
+            ctx.fillText('°C', 0, 0);
+            ctx.restore();
+
+            CHART_GEO = { x0, pw, viewStart: vs, viewDays: vd, useHourly };
+        }
+
+        function rangeLabel() {
+            if (!DGAS) return '';
+            if (VIEW_DAYS >= DNDAYS) return 'Heel ' + DYEAR;
+            const a = new Date(DYEAR, 0, 1 + VIEW_START),
+                b = new Date(DYEAR, 0, 1 + VIEW_START + VIEW_DAYS - 1);
+            return a.getDate() + ' ' + MND[a.getMonth()] + ' – ' + b.getDate() + ' ' + MND[b.getMonth()] + ' ' + DYEAR;
+        }
+
+        function updateZoomUI() {
+            const lvl = VIEW_DAYS >= DNDAYS ? 'year' : (VIEW_DAYS <= 10 ? 'week' : 'month');
+            document.querySelectorAll('.zoombtn[data-zoom]').forEach(b =>
+                b.classList.toggle('is-active', b.dataset.zoom === lvl));
+            const rl = $('zoom-range');
+            if (rl) rl.textContent = rangeLabel();
+            const atStart = VIEW_START <= 0,
+                atEnd = VIEW_START + VIEW_DAYS >= DNDAYS,
+                full = VIEW_DAYS >= DNDAYS;
+            $('pan-prev').disabled = full || atStart;
+            $('pan-next').disabled = full || atEnd;
+            $('chart').style.cursor = full ? 'default' : 'grab';
+        }
+
+        function applyView(start, days) {
+            const n = DNDAYS || 1;
+            VIEW_DAYS = Math.max(7, Math.min(Math.round(days), n));
+            VIEW_START = Math.max(0, Math.min(Math.round(start), n - VIEW_DAYS));
+            drawChart();
+            updateZoomUI();
+        }
+
+        function zoomTo(days) {
+            const center = VIEW_START + VIEW_DAYS / 2;
+            applyView(center - days / 2, days);
+        }
+
+        function xToDay(clientX) {
+            const rect = $('chart').getBoundingClientRect();
+            const ix = (clientX - rect.left) / rect.width * CW;
+            const dayOrHour = CHART_GEO.viewStart + (ix - CHART_GEO.x0) / (CHART_GEO.pw / CHART_GEO.viewDays) - 0.5;
+            return CHART_GEO.useHourly ? dayOrHour / 24 : dayOrHour;
+        }
+
+        document.querySelectorAll('.zoombtn[data-zoom]').forEach(b => b.addEventListener('click', () => {
+            if (b.dataset.zoom === 'year') applyView(0, DNDAYS);
+            else if (b.dataset.zoom === 'month') zoomTo(31);
+            else zoomTo(7);
+        }));
+        $('pan-prev').addEventListener('click', () => applyView(VIEW_START - VIEW_DAYS, VIEW_DAYS));
+        $('pan-next').addEventListener('click', () => applyView(VIEW_START + VIEW_DAYS, VIEW_DAYS));
+
+        $('chart').addEventListener('wheel', e => {
+            if (!DGAS) return;
+            e.preventDefault();
+            const day = xToDay(e.clientX);
+            const factor = e.deltaY > 0 ? 1.3 : 0.77;
+            const nd = Math.max(7, Math.min(Math.round(VIEW_DAYS * factor), DNDAYS));
+            const rel = (day - VIEW_START) / VIEW_DAYS;
+            applyView(day - rel * nd, nd);
+        }, { passive: false });
+
+        let cDrag = false,
+            cDragX = 0,
+            cDragStart = 0;
+        $('chart').addEventListener('pointerdown', e => {
+            if (!DGAS || VIEW_DAYS >= DNDAYS) return;
+            cDrag = true;
+            cDragX = e.clientX;
+            cDragStart = VIEW_START;
+            try { $('chart').setPointerCapture(e.pointerId); } catch (_) {}
+            $('chart').style.cursor = 'grabbing';
+        });
+        $('chart').addEventListener('pointermove', e => {
+            if (!cDrag) return;
+            const rect = $('chart').getBoundingClientRect();
+            const pxPerDay = rect.width * (CHART_GEO.pw / CW) / VIEW_DAYS;
+            applyView(cDragStart - (e.clientX - cDragX) / pxPerDay, VIEW_DAYS);
+            $('chart').style.cursor = 'grabbing';
+        });
+
+        function endDrag() { if (cDrag) { cDrag = false;
+                updateZoomUI(); } }
+        $('chart').addEventListener('pointerup', endDrag);
+        $('chart').addEventListener('pointercancel', endDrag);
+        $('dl-chart').addEventListener('click', () => {
+            const cv = $('chart');
+            cv.toBlob(b => { const u = URL.createObjectURL(b),
+                    a = document.createElement('a');
+                a.href = u;
+                a.download = 'gasverbruik_buitentemp_' + HYEAR + '.png';
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(u), 1000); }, 'image/png');
+        });
+
+        document.querySelectorAll('.sortbtn').forEach(b => b.addEventListener('click', () => {
+            document.querySelectorAll('.sortbtn').forEach(x => x.classList.remove('is-active'));
+            b.classList.add('is-active');
+            SORT = b.dataset.sort;
+            renderHourly();
+        }));
+
+        // ---- Uitgesloten periodes ----
+        let EXCLUDES = [];
+
+        function toOff(year, iso) { return Math.round((new Date(iso + 'T00:00:00') - new Date(year, 0, 1)) / 86400000); }
+
+        function buildExDays(year, days) {
+            const arr = new Array(days).fill(false);
+            for (const r of EXCLUDES) {
+                let a = toOff(year, r.from),
+                    b = toOff(year, r.to);
+                if (isNaN(a) || isNaN(b)) continue;
+                if (b < a) { const t = a;
+                    a = b;
+                    b = t; }
+                a = Math.max(0, a);
+                b = Math.min(days - 1, b);
+                for (let d = a; d <= b; d++) arr[d] = true;
+            }
+            return arr;
+        }
+
+        function fmtDate(iso) { const d = new Date(iso + 'T00:00:00'); return d.getDate() + ' ' + MND[d.getMonth()]; }
+
+        function renderExList() {
+            const year = parseInt(sel.value);
+            $('ex-list').innerHTML = EXCLUDES.map((r, idx) => {
+                let a = toOff(year, r.from),
+                    b = toOff(year, r.to);
+                if (b < a) { const t = a;
+                    a = b;
+                    b = t; }
+                const n = Math.abs(b - a) + 1;
+                return '<span class="chip">' + fmtDate(r.from) + ' – ' + fmtDate(r.to) +
+                    ' <span class="days">' + n + ' dgn</span>' +
+                    '<button type="button" data-rm="' + idx + '" aria-label="Verwijderen">×</button></span>';
+            }).join('');
+        }
+
+        function updateDateBounds() {
+            const y = sel.value;
+            ['ex-from', 'ex-to'].forEach(id => { $(id).min = y + '-01-01';
+                $(id).max = y + '-12-31'; });
+            if (!$('ex-from').value) $('ex-from').value = y + '-07-01';
+            if (!$('ex-to').value) $('ex-to').value = y + '-07-31';
+        }
+
+        $('ex-add-btn').addEventListener('click', () => {
+            const f = $('ex-from').value,
+                t = $('ex-to').value;
+            if (!f || !t) return;
+            EXCLUDES.push({ from: f, to: t });
+            renderExList();
+            calc();
+        });
+        $('ex-list').addEventListener('click', e => {
+            const i = e.target.dataset.rm;
+            if (i !== undefined) { EXCLUDES.splice(+i, 1);
+                renderExList();
+                calc(); }
+        });
+
+        // ---- Weekprofiel ----
+        const PF_DAYS = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'];
+        let PROFILE_ON = false,
+            PROFILE_MODE = 'off';
+        let HEAT = PF_DAYS.map(() => { const a = new Array(24).fill(false); for (let h = 6; h < 22; h++) a[h] = true; return a; });
+
+        (function buildProfileGrid() {
+            let html = '<div class="pf-corner"></div>';
+            for (let h = 0; h < 24; h++) html += '<div class="pf-hh">' + h + '</div>';
+            for (let d = 0; d < 7; d++) {
+                html += '<div class="pf-dl">' + PF_DAYS[d] + '</div>';
+                for (let h = 0; h < 24; h++)
+                    html += '<div class="pf-cell' + (HEAT[d][h] ? ' on' : '') + '" data-d="' + d + '" data-h="' + h +
+                    '"></div>';
+            }
+            $('pf-grid').innerHTML = html;
+        })();
+
+        function syncProfileCells() {
+            $('pf-grid').querySelectorAll('.pf-cell').forEach(c => {
+                c.classList.toggle('on', HEAT[+c.dataset.d][+c.dataset.h]);
+            });
+        }
+
+        function setProfileEnabledUI() {
+            PROFILE_ON = $('pf-on').checked;
+            $('pf-body').hidden = !PROFILE_ON;
+        }
+
+        let pfPainting = false,
+            pfPaintVal = true;
+
+        function paintCell(c) {
+            if (!c) return;
+            const d = +c.dataset.d,
+                h = +c.dataset.h;
+            HEAT[d][h] = pfPaintVal;
+            c.classList.toggle('on', pfPaintVal);
+        }
+        const pfGrid = $('pf-grid');
+        pfGrid.addEventListener('pointerdown', e => {
+            const c = e.target.closest('.pf-cell');
+            if (!c) return;
+            e.preventDefault();
+            pfPainting = true;
+            pfPaintVal = !HEAT[+c.dataset.d][+c.dataset.h];
+            paintCell(c);
+            calc();
+        });
+        pfGrid.addEventListener('pointermove', e => {
+            if (!pfPainting) return;
+            const el = document.elementFromPoint(e.clientX, e.clientY);
+            const c = el && el.closest ? el.closest('.pf-cell') : null;
+            if (c) paintCell(c);
+        });
+        window.addEventListener('pointerup', () => { if (pfPainting) { pfPainting = false;
+                calc(); } });
+        pfGrid.addEventListener('dragstart', e => e.preventDefault());
+
+        $('pf-on').addEventListener('change', () => { setProfileEnabledUI();
+            calc(); });
+        document.querySelectorAll('input[name="pf-mode"]').forEach(r => r.addEventListener('change', () => {
+            PROFILE_MODE = document.querySelector('input[name="pf-mode"]:checked').value;
+            calc();
+        }));
+        $('pf-setback').addEventListener('input', calc);
+        document.querySelectorAll('.pf-btn').forEach(b => b.addEventListener('click', () => {
+            if (b.dataset.copymon !== undefined) { for (let d = 1; d < 7; d++) HEAT[d] = HEAT[0].slice(); } else {
+                const f = b.dataset.fill;
+                HEAT = PF_DAYS.map((_, d) => {
+                    const a = new Array(24).fill(false);
+                    if (f === 'all') a.fill(true);
+                    else if (f === 'office') { if (d < 5) for (let h = 8; h < 18; h++) a[h] = true; }
+                    return a;
+                });
+            }
+            syncProfileCells();
+            calc();
+        }));
+        setProfileEnabledUI();
+
+        // ---- Input listeners ----
+        document.querySelectorAll('input,select').forEach(el => el.addEventListener('input', calc));
+        sel.addEventListener('change', () => { updateDateBounds();
+            renderExList();
+            calc(); });
+
+        // ---- Start ----
+        // Laad eerst de data, daarna wordt de rest geïnitialiseerd.
+        loadData();
+
+        // ---- Theme sync (identiek aan origineel) ----
+        (function themeSync() {
+            const CLASS_THEMES = ['light', 'contrast', 'sepia', 'blueprint'];
+            const ALL = CLASS_THEMES.concat('dark');
+
+            function set(name) {
+                document.body.classList.remove.apply(document.body.classList, CLASS_THEMES);
+                if (CLASS_THEMES.indexOf(name) !== -1) document.body.classList.add(name);
+            }
+
+            function fromUrl() {
+                const m = (location.search + ' ' + location.hash).match(/theme=(light|contrast|sepia|blueprint|dark)/i);
+                return m ? m[1].toLowerCase() : null;
+            }
+
+            function fromParent() {
+                let win = window;
+                for (let i = 0; i < 6 && win; i++) {
+                    try {
+                        if (win.parent === win) break;
+                        const doc = win.parent.document;
+                        for (const el of [doc.body, doc.documentElement]) {
+                            if (!el) continue;
+                            for (const t of CLASS_THEMES) { if (el.classList.contains(t)) return t; }
+                        }
+                        win = win.parent;
+                    } catch (e) { break; }
+                }
+                return null;
+            }
+
+            function fromMedia() {
+                return (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : null;
+            }
+            let forced = fromUrl(),
+                pushed = null,
+                current;
+
+            function resolve() { return forced || pushed || fromParent() || fromMedia(); }
+
+            function apply() {
+                const t = resolve();
+                if (t === current) return;
+                current = t;
+                set(t);
+                try { calc(); } catch (e) {}
+            }
+            apply();
+            try {
+                const doc = window.parent.document;
+                const obs = new MutationObserver(apply);
+                obs.observe(doc.body, { attributes: true, attributeFilter: ['class'] });
+                obs.observe(doc.documentElement, { attributes: true, attributeFilter: ['class'] });
+            } catch (e) {}
+            window.addEventListener('message', function(ev) {
+                const d = ev && ev.data;
+                if (!d) return;
+                const t = d.theme || (d.type === 'theme' && d.value);
+                if (t && ALL.indexOf(t) !== -1) { pushed = t;
+                    apply(); }
+            });
+            if (window.matchMedia) {
+                try { window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', apply); } catch (
+                e) {}
+            }
+            setInterval(apply, 1000);
+        })();
+    </script>
+</body>
+</html>
