@@ -1059,9 +1059,41 @@
                     <div class="field"><input id="tbinnen" type="number" value="16" step="0.5"><span class="unit">&deg;C</span></div>
                 </div>
                 <div>
+                    <label for="locatie">Weerstation (KNMI)</label>
+                    <div class="field">
+                        <select id="locatie">
+                            <option value="308_Cadzand">Cadzand</option>
+                            <option value="290_Twenthe_Airport">Twenthe Airport</option>
+                            <option value="286_Nieuw_Beerta">Nieuw Beerta</option>
+                            <option value="285_Huibertgat">Huibertgat</option>
+                            <option value="283_Hupsel">Hupsel</option>
+                            <option value="280_Groningen_Airport_Eelde">Groningen Airport Eelde</option>
+                            <option value="279_Hoogeveen">Hoogeveen</option>
+                            <option value="278_Heino">Heino</option>
+                            <option value="277_Lauwersoog">Lauwersoog</option>
+                            <option value="275_Deelen_Airport">Deelen Airport</option>
+                            <option value="273_Marknesse">Marknesse</option>
+                            <option value="270_Leeuwarden_Airport">Leeuwarden Airport</option>
+                            <option value="269_Lelystad_Airport">Lelystad Airport</option>
+                            <option value="267_Stavoren">Stavoren</option>
+                            <option value="260_De_Bilt" selected>De Bilt</option>
+                            <option value="258_Houtribdijk">Houtribdijk</option>
+                            <option value="257_Wijk_aan_Zee">Wijk aan Zee</option>
+                            <option value="251_Hoorn_Terschelling">Hoorn Terschelling</option>
+                            <option value="249_Berkhout">Berkhout</option>
+                            <option value="248_Wijdenes">Wijdenes</option>
+                            <option value="242_Vlieland_Vliehorst">Vlieland Vliehorst</option>
+                            <option value="240_Schiphol_Airport">Schiphol Airport</option>
+                            <option value="235_De_Kooy_Airport">De Kooy Airport</option>
+                            <option value="225_IJmuiden">IJmuiden</option>
+                            <option value="215_Voorschoten">Voorschoten</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
                     <label for="jaar">Referentiejaar (uurtemperaturen)</label>
                     <div class="field"><select id="jaar"><option value="">– laden …</option></select></div>
-                    <p class="src-note">Bron: <a href="https://www.daggegevens.knmi.nl/klimatologie/uurgegevens" target="_blank" rel="noopener">Uurwaarden van weerstations</a> (KNMI) &middot; geladen uit <code>240_Schiphol_Airport.txt</code></p>
+                    <p class="src-note">Bron: <a href="https://www.daggegevens.knmi.nl/klimatologie/uurgegevens" target="_blank" rel="noopener">Uurwaarden van weerstations</a> (KNMI) &middot; geladen uit <code id="src-file">260_De_Bilt.txt</code></p>
                 </div>
                 <div>
                     <label for="oppervlakte">Oppervlakte gebouw</label>
@@ -1283,9 +1315,6 @@
 
     <script>
         // ===== DATA LOADER =====
-        // Lees temperatuurgegevens uit "240_Schiphol_Airport.txt" in dezelfde map.
-        // Het bestand heeft het formaat: STN,YYYYMMDD,HH,T (T in 0.1 °C)
-        const DATA_FILE = '240_Schiphol_Airport.txt';
         let TEMPS = {};
         let dataLoaded = false;
         let dataLoadError = false;
@@ -1299,27 +1328,32 @@
         }
 
         async function loadData() {
+            dataLoaded = false;
+            TEMPS = {};
+            const selLoc = document.getElementById('locatie');
+            const fileName = selLoc.value + '.txt';
+            document.getElementById('src-file').textContent = fileName;
+
             try {
-                setStatus('<span class="spinner"></span>Bezig met laden van temperatuurgegevens …', 'loading');
-                const resp = await fetch(DATA_FILE);
+                setStatus('<span class="spinner"></span>Bezig met laden: ' + fileName + ' …', 'loading');
+                const resp = await fetch(fileName);
                 if (!resp.ok) throw new Error('Bestand niet gevonden of niet leesbaar (HTTP ' + resp.status + ')');
                 const text = await resp.text();
                 parseData(text);
                 dataLoaded = true;
                 dataLoadError = false;
-                setStatus('✔ ' + Object.keys(TEMPS).length + ' jaren geladen uit <code>' + DATA_FILE + '</code>', 'ok');
+                setStatus('✔ ' + Object.keys(TEMPS).length + ' jaren geladen uit <code>' + fileName + '</code>', 'ok');
                 populateYearDropdown();
                 calc();
             } catch (e) {
                 dataLoadError = true;
                 console.error('Data laadfout:', e);
                 setStatus(
-                    '❌ Kon <code>' + DATA_FILE +
+                    '❌ Kon <code>' + fileName +
                     '</code> niet laden. Zorg dat het bestand in dezelfde map staat als deze HTML-pagina.<br><span style="font-size:13px;opacity:0.7;">Fout: ' +
                     e.message + '</span>',
                     'error'
                 );
-                // Toon een lege dropdown en een placeholder
                 const sel = document.getElementById('jaar');
                 sel.innerHTML = '<option value="">– geen data –</option>';
             }
@@ -1349,7 +1383,6 @@
             }
 
             // Controleer of elk jaar het juiste aantal uren heeft (8760 of 8784)
-            // En sorteer de jaren
             TEMPS = {};
             for (const [year, arr] of Object.entries(yearData)) {
                 const expected = isLeapYear(parseInt(year)) ? 8784 : 8760;
@@ -1387,9 +1420,7 @@
             }
         }
 
-        // ===== REST VAN DE ORIGINELE CODE (aangepast) =====
-        // Alleen de TEMPS-afhankelijke delen zijn herschreven; de rest blijft vrijwel ongewijzigd.
-
+        // ===== REST VAN DE ORIGINELE CODE =====
         const $ = id => document.getElementById(id);
         const sel = $('jaar');
 
@@ -1397,7 +1428,6 @@
 
         function calc() {
             if (!dataLoaded || dataLoadError) {
-                // Als data nog niet geladen is, toon placeholders
                 $('qmax').innerHTML = '&mdash;<small>kW</small>';
                 $('perm2').textContent = '—';
                 $('qtot').textContent = '—';
@@ -1411,7 +1441,6 @@
             const year = sel.value;
             const temps = TEMPS[year];
             if (!temps) {
-                // Fallback: probeer eerste beschikbare jaar
                 const years = Object.keys(TEMPS).sort();
                 if (years.length) {
                     sel.value = years[0];
@@ -1436,7 +1465,7 @@
             const days = temps.length / 24;
             const exDay = buildExDays(parseInt(year), days);
             const dowOf = new Array(days);
-            for (let d = 0; d < days; d++) dowOf[d] = (new Date(parseInt(year), 0, 1 + d).getDay() + 6) % 7; // 0=ma..6=zo
+            for (let d = 0; d < days; d++) dowOf[d] = (new Date(parseInt(year), 0, 1 + d).getDay() + 6) % 7;
             const useProfile = PROFILE_ON;
             const pfOff = PROFILE_MODE === 'off';
             const Tset = parseFloat($('pf-setback').value);
@@ -1479,7 +1508,6 @@
                 'nl-NL') +
                 (exUren ? '  ·  ' + exUren.toLocaleString('nl-NL') + ' u uitgesloten' : '');
 
-            // Build hourly rows
             const base = new Date(parseInt(year), 0, 1);
             HOURS = temps.map((tb, i) => {
                 const off = Math.floor(i / 24),
@@ -1500,7 +1528,6 @@
             HTITLE = 'Warmteverlies per uur — ' + year;
             renderHourly();
 
-            // Daily aggregation
             const nDays = temps.length / 24;
             const dGas = new Float64Array(nDays),
                 dTsum = new Float64Array(nDays),
@@ -1537,9 +1564,6 @@
             drawChart();
             updateZoomUI();
         }
-
-        // ---- De rest van de code blijft hetzelfde als het origineel ----
-        // (alle variabelen en functies die hierboven niet zijn gedefinieerd, worden hieronder herhaald)
 
         let HOURS = [],
             SROWS = [],
@@ -1666,7 +1690,6 @@
                 x0 = L,
                 y0 = T + ph;
 
-            // legend
             ctx.textBaseline = 'middle';
             ctx.textAlign = 'left';
             ctx.font = '13px Georgia,"Times New Roman",serif';
@@ -2115,15 +2138,19 @@
 
         // ---- Input listeners ----
         document.querySelectorAll('input,select').forEach(el => el.addEventListener('input', calc));
+        document.getElementById('locatie').addEventListener('change', () => {
+            dataLoaded = false;
+            document.getElementById('jaar').innerHTML = '<option value="">– laden …</option>';
+            loadData();
+        });
         sel.addEventListener('change', () => { updateDateBounds();
             renderExList();
             calc(); });
 
         // ---- Start ----
-        // Laad eerst de data, daarna wordt de rest geïnitialiseerd.
         loadData();
 
-        // ---- Theme sync (identiek aan origineel) ----
+        // ---- Theme sync ----
         (function themeSync() {
             const CLASS_THEMES = ['light', 'contrast', 'sepia', 'blueprint'];
             const ALL = CLASS_THEMES.concat('dark');
