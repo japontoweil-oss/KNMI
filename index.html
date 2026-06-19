@@ -1061,7 +1061,7 @@
                 <div>
                     <label for="jaar">Referentiejaar (uurtemperaturen)</label>
                     <div class="field"><select id="jaar"><option value="">– laden …</option></select></div>
-                    <p class="src-note">Bron: <a href="https://www.daggegevens.knmi.nl/klimatologie/uurgegevens" target="_blank" rel="noopener">Uurwaarden van weerstations</a> (KNMI) &middot; geladen uit <code>240 Schiphol Airport.txt</code></p>
+                    <p class="src-note">Bron: <a href="https://www.daggegevens.knmi.nl/klimatologie/uurgegevens" target="_blank" rel="noopener">Uurwaarden van weerstations</a> (KNMI) &middot; geladen uit <code>240_Schiphol_Airport.txt</code></p>
                 </div>
                 <div>
                     <label for="oppervlakte">Oppervlakte gebouw</label>
@@ -1283,9 +1283,9 @@
 
     <script>
         // ===== DATA LOADER =====
-        // Lees temperatuurgegevens uit "240 Schiphol Airport.txt" in dezelfde map.
+        // Lees temperatuurgegevens uit "240_Schiphol_Airport.txt" in dezelfde map.
         // Het bestand heeft het formaat: STN,YYYYMMDD,HH,T (T in 0.1 °C)
-        const DATA_FILE = '240 Schiphol Airport.txt';
+        const DATA_FILE = '240_Schiphol_Airport.txt';
         let TEMPS = {};
         let dataLoaded = false;
         let dataLoadError = false;
